@@ -1,12 +1,14 @@
+from typing import Tuple
+from datetime import datetime
+from pandas.errors import EmptyDataError
+
 import os
 import json
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from typing import Tuple
-from datetime import datetime
-from pandas.errors import EmptyDataError
+import matplotlib.ticker as mticker
 
 
 class Magma:
@@ -90,7 +92,7 @@ class Magma:
             'gempa.guguran': 'Guguran',
             'gempa.hembusan': 'Hembusan',
             'gempa.harmonik': 'Harmonik',
-            'gempa.tremor_non_harmonik': 'Tremor-Non Harmonik',
+            'gempa.tremor_non-_harmonik': 'Tremor Non-Harmonik',
             'gempa.tornillo': 'Tornillo',
             'gempa.low_frequency': 'Low Frequency',
             'gempa.hybrid_fase_banyak': 'Hybrid/Fase Banyak',
@@ -105,6 +107,9 @@ class Magma:
             'gempa.deep_tremor': 'Deep Tremor',
             'gempa.tremor_menerus': 'Tremor Menerus'
         }, inplace=True)
+
+        if 'Tremor Menerus' in df.columns:
+            df.drop(columns=['Tremor Menerus'], inplace=True)
 
         return df
 
@@ -171,7 +176,6 @@ class Magma:
 
         plt.subplots_adjust(hspace=0.0)
 
-
         for gempa, column_name in enumerate(df.columns):
             axs[gempa].bar(df.index, df[column_name], width=width, label=column_name, color=self.colors[column_name], linewidth=0)
 
@@ -182,8 +186,14 @@ class Magma:
             axs[gempa].xaxis.set_major_locator(mdates.DayLocator(interval=interval))
             axs[gempa].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
+            # axs[gempa].yaxis.set_major_locator(mticker.MultipleLocator(
+            #     df[column_name].max()/5
+            # ))
+
             axs[gempa].yaxis.get_major_ticks()[0].label1.set_visible(False)
             axs[gempa].set_xlim(df.first_valid_index(), df.last_valid_index())
+
+            axs[gempa].set_ylim([0, df[column_name].max() * 1.2])
 
             # Rotate x label
             for label in axs[gempa].get_xticklabels(which='major'):
@@ -200,13 +210,14 @@ class Magma:
             #                        color='red', label="_" * key + 'Single Eruption')
 
         fig.supylabel('Jumlah', x=0.08)
-        fig.suptitle('Kegempaan', fontsize=12, y=0.95)
+        fig.suptitle('Kegempaan', fontsize=12, y=0.8)
 
         return fig
 
     @staticmethod
     def plot_from_df(df: pd.DataFrame, width: float = 0.5, interval: int = 1 ) -> plt.Figure:
         fig, axs = plt.subplots(nrows=len(df.columns), ncols=1, figsize=(12, 1 * len(df.columns)), sharex=True)
+
         colors = {
             'Letusan/Erupsi': '#F44336',
             'Awan Panas Letusan': '#e91e63',
@@ -242,8 +253,14 @@ class Magma:
             axs[gempa].xaxis.set_major_locator(mdates.DayLocator(interval=interval))
             axs[gempa].xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
+            # axs[gempa].yaxis.set_major_locator(mticker.MultipleLocator(
+            #     df[column_name].max()/5
+            # ))
+
             axs[gempa].yaxis.get_major_ticks()[0].label1.set_visible(False)
             axs[gempa].set_xlim(df.first_valid_index(), df.last_valid_index())
+
+            axs[gempa].set_ylim([0, df[column_name].max() * 1.2])
 
             # Rotate x label
             for label in axs[gempa].get_xticklabels(which='major'):
@@ -260,7 +277,7 @@ class Magma:
             #                        color='red', label="_" * key + 'Single Eruption')
 
         fig.supylabel('Jumlah', x=0.08)
-        fig.suptitle('Kegempaan', fontsize=12)
+        fig.suptitle('Kegempaan', fontsize=12, y=0.9)
 
         return fig
 
