@@ -70,7 +70,8 @@ class SsamEW:
 
         return df
 
-    def plot(self, save: bool = True, enable_title: bool = True, width: int = 16, height: int = 9, interval: int = 1) -> None:
+    def plot(self, save: bool = True, enable_title: bool = True,
+             width: int = 16, height: int = 9, interval: int = 1) -> None:
         start_date =  datetime.strptime(self.start_date, '%Y-%m-%d').strftime('%d %b %Y')
         end_date = datetime.strptime(self.end_date, '%Y-%m-%d').strftime('%d %b %Y')
 
