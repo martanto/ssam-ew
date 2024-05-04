@@ -1,6 +1,6 @@
 from zipfile import ZipFile
 from datetime import datetime
-from magma import Magma
+import magma
 from typing import Tuple
 
 import pandas as pd
@@ -14,7 +14,11 @@ import matplotlib.ticker as mticker
 class SsamEW:
     def __init__(self, zip_filename: str, title: str, start_date: str = None, end_date: str = None,
                  wildcard: str = '.dat', vmin: float = 0.0, vmax: float = 50.0,
-                 frequencies: list[float] = None) -> None:
+                 frequencies: list[float] = None, current_dir: str = None) -> None:
+
+        self.current_dir = current_dir
+        if self.current_dir is None:
+            self.current_dir = os.getcwd()
 
         input_dir, self.output_dir, self.figures_dir = self.check_directory(os.getcwd())
 
@@ -49,7 +53,11 @@ class SsamEW:
 
         print('💾 Merged SSAM file(s) saved to : {}'.format(csv))
 
-    def check_directory(self, current_dir: str) -> (str, str, str):
+    def check_directory(self, current_dir: str = None) -> Tuple[str, str, str]:
+
+        if current_dir is None:
+            current_dir = self.current_dir
+
         input_dir = os.path.join(current_dir, 'input')
         os.makedirs(input_dir, exist_ok=True)
 
@@ -120,9 +128,12 @@ class SsamEW:
         return fig
 
     def plot_with_magma(self, token: str, volcano_code: str, earthquake_events: str | list[str] = None,
-                        figsize: Tuple[int, int] = (14, 12), height_ratios: list[int] = [2, 1]):
+                        figsize: Tuple[int, int] = (14, 12), height_ratios=None):
 
-        magma = Magma(
+        if height_ratios is None:
+            height_ratios = [2, 1]
+
+        magma_plot = magma.Plot(
             token=token,
             volcano_code=volcano_code,
             start_date=self.start_date,
@@ -130,7 +141,7 @@ class SsamEW:
             earthquake_events=earthquake_events,
         )
 
-        df = magma.df
+        df = magma_plot.df
         height = df.columns.size + 1
         colors = magma.colors
 
@@ -141,7 +152,8 @@ class SsamEW:
         fig_magma.supylabel('Jumlah')
         axs_magma = fig_magma.subplots(nrows=len(df.columns), ncols=1, sharex=True)
         for gempa, column_name in enumerate(df.columns):
-            axs_magma[gempa].bar(df.index, df[column_name], width=0.5, label=column_name, color=colors[column_name], linewidth=0)
+            axs_magma[gempa].bar(df.index, df[column_name], width=0.5, label=column_name,
+                                 color=colors[column_name], linewidth=0)
             axs_magma[gempa].set_ylim([0, df[column_name].max()*1.2])
 
             axs_magma[gempa].legend(loc=2)
