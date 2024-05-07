@@ -14,13 +14,17 @@ import matplotlib.ticker as mticker
 class SsamEW:
     def __init__(self, zip_filename: str, title: str, start_date: str = None, end_date: str = None,
                  wildcard: str = '.dat', vmin: float = 0.0, vmax: float = 50.0,
-                 frequencies: list[float] = None, current_dir: str = None) -> None:
+                 frequencies: list[float] = None, current_dir: str = None, input_dir: str = None) -> None:
 
         self.current_dir = current_dir
         if self.current_dir is None:
             self.current_dir = os.getcwd()
 
-        input_dir, self.output_dir, self.figures_dir = self.check_directory(os.getcwd())
+        if input_dir is None:
+            input_dir = os.path.join(current_dir, 'input')
+            os.makedirs(input_dir, exist_ok=True)
+
+        self.output_dir, self.figures_dir = self.check_directory(os.getcwd())
 
         zip_path = os.path.join(input_dir, zip_filename)
         zip_file = ZipFile(zip_path, 'r')
@@ -53,13 +57,10 @@ class SsamEW:
 
         print('💾 Merged SSAM file(s) saved to : {}'.format(csv))
 
-    def check_directory(self, current_dir: str = None) -> Tuple[str, str, str]:
+    def check_directory(self, current_dir: str = None) -> Tuple[str, str]:
 
         if current_dir is None:
             current_dir = self.current_dir
-
-        input_dir = os.path.join(current_dir, 'input')
-        os.makedirs(input_dir, exist_ok=True)
 
         output_dir = os.path.join(current_dir, 'output')
         os.makedirs(output_dir, exist_ok=True)
@@ -67,7 +68,7 @@ class SsamEW:
         figures_dir = os.path.join(current_dir, 'figures')
         os.makedirs(figures_dir, exist_ok=True)
 
-        return input_dir, output_dir, figures_dir
+        return output_dir, figures_dir
 
     def get_df(self) -> pd.DataFrame:
         df = pd.concat(self.csv_files, ignore_index=True)
