@@ -1,0 +1,40 @@
+[build-system]
+requires = ["flit_core>=3.4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name =  "ssam-ew"
+version = "1.0.0"
+authors = [
+    {name = "Martanto", email = "martanto@live.com"},
+]
+description = "Plot SSAM from earthworm files"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["seismic", "volcano", "seiscomp", "volcanology", "seismology", "magma indonesia"]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "matplotlib",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+base = [
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "matplotlib",
+]
+
+[project.urls]
+Homepage = "https://github.com/martanto/ssam-ew"
+Issues = "https://github.com/martanto/ssam-ew/issues"

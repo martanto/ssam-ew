@@ -1,6 +1,6 @@
 
 from typing import Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pandas.errors import EmptyDataError
 from pathlib import Path
 
@@ -76,13 +76,14 @@ class Auth:
                 self.success = True
             if self.success:
                 print('✅ Authenticated. Selamat datang di API MAGMA Indonesia')
+                print('⌚ Token expired at {}'.format(self.expired))
 
     def validate_token(self) -> bool:
         headers = {'Authorization': 'Bearer ' + self.token}
 
         try:
             response = requests.request("GET", self.url_validate_token, headers=headers).json()
-            self.expired = datetime.utcfromtimestamp(response['exp'])
+            self.expired = datetime.fromtimestamp(response['exp'], timezone.utc)
         except Exception as e:
             raise f'Error validating token: {e}'
 
@@ -132,7 +133,7 @@ class Plot(Auth):
         if self.current_dir is None:
             self.current_dir = os.getcwd()
 
-        self.output_dir, self.figures_dir = self.check_directory()
+        self.output_dir, self.figures_dir, self.magma_dir = self.check_directory()
 
         if start_date is None:
             self.start_date: str = datetime.today().strftime('%Y-%m-%d')
@@ -142,7 +143,7 @@ class Plot(Auth):
 
         self.csv = self.download()
 
-    def check_directory(self, current_dir: str = None) -> Tuple[str, str]:
+    def check_directory(self, current_dir: str = None) -> Tuple[str, str, str]:
 
         if current_dir is None:
             current_dir = self.current_dir
@@ -153,7 +154,10 @@ class Plot(Auth):
         figures_dir = os.path.join(current_dir, 'figures')
         os.makedirs(figures_dir, exist_ok=True)
 
-        return output_dir, figures_dir
+        magma_dir = os.path.join(output_dir, 'magma')
+        os.makedirs(magma_dir, exist_ok=True)
+
+        return output_dir, figures_dir, magma_dir
 
     @staticmethod
     def validate_earthquake_events(earthquake_events: str | list[str] = None) -> list[str]:
@@ -256,7 +260,7 @@ class Plot(Auth):
         """
         if not self.df.empty:
             try:
-                csv = os.path.join(self.output_dir, "{}.csv".format(self.filename))
+                csv = os.path.join(self.magma_dir, "{}.csv".format(self.filename))
                 self.df.to_csv(csv)
                 self.csv = csv
                 print(f'💾 Saved to {csv}')
