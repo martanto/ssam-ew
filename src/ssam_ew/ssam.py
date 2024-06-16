@@ -249,10 +249,11 @@ class SsamEW:
     def plot_with_magma(self, token: str, volcano_code: str,  start_date: str, end_date: str,
                         resample: str = None, interval: int = 1, color_map: str = 'jet_r',
                         value_min: float = 0.0, value_max: float = 50.0, frequencies: list[float] = None,
-                        earthquake_events: str | list[str] = None, width: int = 14, height: int = 12, height_ratios=None):
+                        earthquake_events: str | list[str] = None, width: int = 12, height: int = None,
+                        y_locator: int = None, height_ratios=None):
 
         if height_ratios is None:
-            height_ratios = [2, 1]
+            height_ratios = [1, 0.2]
 
         magma_plot = Plot(
             token=token,
@@ -263,9 +264,11 @@ class SsamEW:
         )
 
         df = magma_plot.df
-        height = df.columns.size + 1
 
-        fig = plt.figure(figsize=(12, 2 * height), dpi=100)
+        if height is None:
+            height = df.columns.size + 1
+
+        fig = plt.figure(figsize=(width, height), dpi=100)
         (fig_magma, fig_ssam) = fig.subfigures(nrows=2, ncols=1, height_ratios=height_ratios)
 
         fig_magma.subplots_adjust(hspace=0.0)
@@ -278,7 +281,10 @@ class SsamEW:
 
             axs_magma[gempa].legend(loc=2)
             axs_magma[gempa].tick_params(labelbottom=False)
-            axs_magma[gempa].yaxis.set_major_locator(mticker.MultipleLocator(1))
+
+            if y_locator is not None and df[column_name].max() > y_locator:
+                axs_magma[gempa].yaxis.set_major_locator(mticker.MultipleLocator(y_locator))
+
             axs_magma[gempa].yaxis.get_major_ticks()[0].label1.set_visible(False)
 
         if resample is None:
