@@ -250,52 +250,77 @@ class SsamEW:
                         resample: str = None, interval: int = 1, color_map: str = 'jet_r',
                         value_min: float = 0.0, value_max: float = 50.0, frequencies: list[float] = None,
                         earthquake_events: str | list[str] = None, width: int = 12, height: int = None,
-                        y_locator: int = None, height_ratios=None):
+                        y_locator: int = None, height_ratios=None) -> None:
+        """Plot SSAM with MAGMA.
+
+        Args:
+            token (str): Token for MAGMA.
+            volcano_code (str): Volcano code for MAGMA.
+            start_date (str): Start date.
+            end_date (str): End date.
+            resample (str): Resampling rules. Default '1min'. Use 'D' for daily resample. 'min' for minute resample.
+            interval (int): Interval for MAGMA.
+            color_map (str): Color map for MAGMA. Default 'jet_r'
+            value_min: Y axis minimum value for SSAM.
+            value_max: Y axis maximum value for SSAM.
+            frequencies (list[float], optional): Frequencies for SSAM.
+            earthquake_events (str): Earthquake events for MAGMA.
+            width (int): Width for figure.
+            height (int): Height for figure.
+            y_locator (int): Y interval for MAGMA Plot.
+            height_ratios (list[float]): Height ratios for between SSAM and MAGMA figure.
+            
+        Returns:
+            None
+        """
 
         if height_ratios is None:
             height_ratios = [1, 0.2]
-
-        magma_plot = Plot(
-            token=token,
-            volcano_code=volcano_code,
-            start_date=start_date,
-            end_date=end_date,
-            earthquake_events=earthquake_events,
-        )
-
-        df = magma_plot.df
-
-        if height is None:
-            height = df.columns.size + 1
-
-        fig = plt.figure(figsize=(width, height), dpi=100)
-        (fig_magma, fig_ssam) = fig.subfigures(nrows=2, ncols=1, height_ratios=height_ratios)
-
-        fig_magma.subplots_adjust(hspace=0.0)
-        fig_magma.supylabel('Jumlah')
-        axs_magma = fig_magma.subplots(nrows=len(df.columns), ncols=1, sharex=True)
-        for gempa, column_name in enumerate(df.columns):
-            axs_magma[gempa].bar(df.index, df[column_name], width=0.5, label=column_name,
-                                 color=colors[column_name], linewidth=0)
-            axs_magma[gempa].set_ylim([0, df[column_name].max() * 1.2])
-
-            axs_magma[gempa].legend(loc=2)
-            axs_magma[gempa].tick_params(labelbottom=False)
-
-            if y_locator is not None and df[column_name].max() > y_locator:
-                axs_magma[gempa].yaxis.set_major_locator(mticker.MultipleLocator(y_locator))
-
-            axs_magma[gempa].yaxis.get_major_ticks()[0].label1.set_visible(False)
 
         if resample is None:
             resample = '1min'
 
         dates: DatetimeIndex = pd.date_range(start_date, end_date, freq="D")
 
-        df = self.get_df(dates, resample)
+        df_ssam = self.get_df(dates, resample)
+        valid_start_date = df_ssam.first_valid_index()
+        valid_end_date = df_ssam.last_valid_index()
+
+        magma_plot = Plot(
+            token=token,
+            volcano_code=volcano_code,
+            start_date=str(df_ssam.first_valid_index()).split(' ')[0],
+            end_date=str(df_ssam.last_valid_index()).split(' ')[0],
+            earthquake_events=earthquake_events,
+        )
+
+        df_magma = magma_plot.df
+
+        if height is None:
+            height = df_magma.columns.size + 1
+
+        fig = plt.figure(figsize=(width, height), dpi=100)
+        (fig_magma, fig_ssam) = fig.subfigures(nrows=2, ncols=1, height_ratios=height_ratios)
+
+        fig_magma.subplots_adjust(hspace=0.0)
+        fig_magma.supylabel('Jumlah')
+        axs_magma = fig_magma.subplots(nrows=len(df_magma.columns), ncols=1, sharex=True)
+        for gempa, column_name in enumerate(df_magma.columns):
+            axs_magma[gempa].bar(df_magma.index, df_magma[column_name], width=0.5, label=column_name,
+                                 color=colors[column_name], linewidth=0)
+            axs_magma[gempa].set_ylim([0, df_magma[column_name].max() * 1.2])
+            axs_magma[gempa].set_xlim(valid_start_date, valid_end_date)
+
+            if y_locator is not None and df_magma[column_name].max() > y_locator:
+                axs_magma[gempa].yaxis.set_major_locator(mticker.MultipleLocator(y_locator))
+
+            axs_magma[gempa].xaxis.set_major_locator(mdates.DayLocator(interval=interval))
+            axs_magma[gempa].yaxis.get_major_ticks()[0].label1.set_visible(False)
+            axs_magma[gempa].legend(loc=2)
+            axs_magma[gempa].tick_params(labelbottom=False)
 
         ax_ssam = fig_ssam.subplots(nrows=1, ncols=1)
-        self.plot_ax(ax_ssam, df=df, interval=interval, color_map=color_map, value_min=value_min,
+        self.plot_ax(ax_ssam, df=df_ssam, interval=interval, color_map=color_map, value_min=value_min,
                           value_max=value_max, frequencies=frequencies)
 
         plt.tight_layout()
