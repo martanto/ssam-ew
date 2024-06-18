@@ -269,7 +269,7 @@ class SsamEW:
             height (int): Height for figure.
             y_locator (int): Y interval for MAGMA Plot.
             height_ratios (list[float]): Height ratios for between SSAM and MAGMA figure.
-            
+
         Returns:
             None
         """
